@@ -21,8 +21,8 @@
 	
 	<scm>
 		<url>git@github.com:jtrfp/jfdt</url>
-		<connection>scm:git:git@github.com:jtrfp/jdt.git</connection>
-		<developerConnection>scm:git:git@github.com:jtrfp/jdt.git</developerConnection>
+		<connection>scm:git:git@github.com:jtrfp/jfdt.git</connection>
+		<developerConnection>scm:git:git@github.com:jtrfp/jfdt.git</developerConnection>
 	</scm>
 	
   	<developers>
