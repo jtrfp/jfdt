@@ -48,13 +48,14 @@ public class TestParser
 	 */
 	public TestParser(String testFilePath, String testTempPath, String beanClassName)
 		{
+		Parser prs = new Parser();
 		try
 			{
-			ThirdPartyParseable obj = Parser.readToNewBean(new EndianAwareDataInputStream(new DataInputStream(new BufferedInputStream(new FileInputStream(testFilePath)))), (Class<? extends ThirdPartyParseable>)Class.forName(beanClassName));
+			ThirdPartyParseable obj = prs.readToNewBean(new EndianAwareDataInputStream(new DataInputStream(new BufferedInputStream(new FileInputStream(testFilePath)))), (Class<? extends ThirdPartyParseable>)Class.forName(beanClassName));
 			
 			printBean(obj);
 			
-			Parser.writeBean(obj,new EndianAwareDataOutputStream(new DataOutputStream(new FileOutputStream(testTempPath))));
+			prs.writeBean(obj,new EndianAwareDataOutputStream(new DataOutputStream(new FileOutputStream(testTempPath))));
 			
 			//new File(testTempPath).deleteOnExit();//cleanup //Disabled so that the in/out can be analyzed manually.
 			int diffIndex;

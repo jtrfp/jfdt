@@ -22,18 +22,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-
 public abstract class SelfParsingFile implements ThirdPartyParseable
 	{
 	public SelfParsingFile(){}
 	public SelfParsingFile(InputStream is) throws IllegalAccessException, IOException
 		{
-		Parser.readToExistingBean(is, this);
+		new Parser().readToExistingBean(is, this);
 		is.close();
 		}
 	
 	public void saveAs(OutputStream os)
 		{
-		Parser.writeBean(this, os);
+		new Parser().writeBean(this, os);
 		}
 	}//end SelfParsingFile

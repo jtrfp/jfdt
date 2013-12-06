@@ -25,5 +25,5 @@ package org.jtrfp.jfdt;
  */
 public interface ThirdPartyParseable
 	{
-	public void describeFormat() throws UnrecognizedFormatException;
+	public void describeFormat(Parser parser) throws UnrecognizedFormatException;
 	}
