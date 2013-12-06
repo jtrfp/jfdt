@@ -9,7 +9,7 @@
 	
 	<name>jfdt</name>
 	<description>Format Description Toolkit for Java</description>
-	<url>https://github.com/jtrfp/jfdt</url>
+	<url>http://www.jtrfp.org/</url>
 	
 	<licenses>
 		<license>
@@ -72,7 +72,7 @@
 				<configuration>
 					<serverId>nexus-releases</serverId>
 					<nexusUrl>https://oss.sonatype.org</nexusUrl>
-					<stagingProfileId></stagingProfileId>
+					<stagingProfileId>1f138f325160b3</stagingProfileId>
 				</configuration>
 			</plugin>
 		</plugins>
