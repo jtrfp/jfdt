@@ -1148,21 +1148,38 @@ public class Parser{
 						ThirdPartyParseable bean) throws IOException{
 					//final int count = get(bean,countProperty,Integer.class);
 					ArrayList<CLASS>objectsToMake = new ArrayList<CLASS>();
+
+					Class indexingClass=null;
+					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayPropertyName);}
+					catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+					
 					for(int i=0; i<count; i++){
 						try{objectsToMake.add(readToNewBean(is, elementClass));}
 						catch(IllegalAccessException e){e.printStackTrace();}
 						catch(UnrecognizedFormatException e){e.printStackTrace();}
 						}//end for(count)
-					set(bean,arrayPropertyName,objectsToMake.toArray((CLASS [])Array.newInstance(elementClass, 0)),null);
+					if(List.class.isAssignableFrom(indexingClass)) set(bean,arrayPropertyName,objectsToMake,null);
+					else set(bean,arrayPropertyName,objectsToMake.toArray((CLASS [])Array.newInstance(elementClass, 0)),null);
 					}//end read(...)
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
 						ThirdPartyParseable bean) throws IOException{
-					CLASS [] array = get(bean,arrayPropertyName, (Class<CLASS []>)Array.newInstance(elementClass, 0).getClass());
 					
-					for(CLASS item:array)
-						{writeBean(item,os);}
+					Class indexingClass=null;
+					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayPropertyName);}
+					catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+					
+					if(List.class.isAssignableFrom(indexingClass)) 
+						{List<CLASS> list = (List<CLASS>)get(bean,arrayPropertyName, indexingClass);
+						for(CLASS item:list)
+							{writeBean(item,os);}
+						}
+					else{
+						CLASS [] array = get(bean,arrayPropertyName, (Class<CLASS []>)Array.newInstance(elementClass, 0).getClass());
+						for(CLASS item:array)
+							{writeBean(item,os);}
+						}//end if(array)
 					}//end write(...)
 			}.go();
 		}//end arrayOf(...)
