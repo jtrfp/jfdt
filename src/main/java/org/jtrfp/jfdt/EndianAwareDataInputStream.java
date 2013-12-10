@@ -1,7 +1,8 @@
 /*******************************************************************************
  * This file is part of the JAVA FILE DESCRIPTION TOOLKIT (JFDT)
  * A library for parsing files and mapping their data to/from java Beans.
- * Copyright (c) 2012 Chuck Ritola
+ * ...which is now part of the JAVA TERMINAL REALITY FILE PARSERS project.
+ * Copyright (c) 2012,2013 Chuck Ritola and any contributors to these files.
  * 
  *     JFDT is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -14,7 +15,7 @@
  *     GNU General Public License for more details.
  * 
  *     You should have received a copy of the GNU General Public License
- *     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ *     along with jTRFP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.jtrfp.jfdt;
 
@@ -27,8 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class EndianAwareDataInputStream extends FilterInputStream implements
-		Closeable, DataInput
-	{
+		Closeable, DataInput{
 	ByteOrder order;
 	DataInputStream in;
 	long readTally;
@@ -38,76 +38,67 @@ public class EndianAwareDataInputStream extends FilterInputStream implements
 	final byte [] w4 = new byte[4];
 	final byte [] w2 = new byte[2];
 	
-	public EndianAwareDataInputStream(DataInputStream in)
-		{
+	public EndianAwareDataInputStream(DataInputStream in){
 		super(in);
 		this.in=in;
 		}
 
-	public long getReadTally(){return readTally;}
+	public long getReadTally()
+		{return readTally;}
 	
 	@Override
-	public int read() throws IOException
-		{
+	public int read() throws IOException{
 		int result=in.read();
 		if(result!=-1)readTally+=result;
 		return result;
 		}
 	
 	@Override
-	public int read(byte [] b) throws IOException
-		{
+	public int read(byte [] b) throws IOException{
 		int result=in.read(b);
 		readTally+=result;
 		return result;
 		}
 	
 	@Override
-	public boolean readBoolean() throws IOException
-		{
+	public boolean readBoolean() throws IOException{
 		readTally++;
 		return in.readBoolean();
 		}
 
 	@Override
-	public byte readByte() throws IOException
-		{
+	public byte readByte() throws IOException{
 		readTally++;
 		return in.readByte();
 		}
 
 	@Override
-	public char readChar() throws IOException
-		{
+	public char readChar() throws IOException{
 		readTally+=2;
 		return in.readChar();
 		}
 
 	@Override
-	public double readDouble() throws IOException
-		{
+	public double readDouble() throws IOException{
 		readTally+=8;
 		if(order==ByteOrder.BIG_ENDIAN)
 			{return readDouble();}
-		else
-			{
+		else{
 			in.read(w8);
 			return ByteBuffer.wrap(w8).order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer().get();
 			}
 		}//end readDouble(...)
 
 	@Override
-	public float readFloat() throws IOException
-		{
+	public float readFloat() throws IOException{
 		readTally+=4;
 		if(order==ByteOrder.BIG_ENDIAN)
 			{return in.readFloat();}
-		else
-			{
+		else{
 			in.read(w4);
 			return ByteBuffer.wrap(w4).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get();
 			}
-		}
+		}//end readFloat()
 
 	@Override
 	public void readFully(byte[] b) throws IOException
@@ -139,61 +130,51 @@ public class EndianAwareDataInputStream extends FilterInputStream implements
 	@Override
 	@Deprecated
 	public String readLine() throws IOException
-		{
-		return in.readLine();
-		}
+		{return in.readLine();}
 
 	@Override
-	public long readLong() throws IOException
-		{
+	public long readLong() throws IOException{
 		readTally+=8;
 		if(order==ByteOrder.BIG_ENDIAN)
 			{return in.readLong();}
-		else
-			{
+		else{
 			in.read(w8);
 			return ByteBuffer.wrap(w8).order(ByteOrder.LITTLE_ENDIAN).asLongBuffer().get();
 			}
-		}
+		}//end readLong()
 
 	@Override
-	public short readShort() throws IOException
-		{
+	public short readShort() throws IOException{
 		readTally+=2;
 		if(order==ByteOrder.BIG_ENDIAN)
 			{return readShort();}
-		else
-			{
+		else{
 			in.read(w2);
 			return ByteBuffer.wrap(w2).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get();
 			}
-		}
+		}//end readShort()
 
 	@Override
-	public String readUTF() throws IOException
-		{
+	public String readUTF() throws IOException{
 		String result = in.readUTF();
 		readTally+=result.length()+1;//+1 for terminator
 		return result;
 		}
 
 	@Override
-	public int readUnsignedByte() throws IOException
-		{
+	public int readUnsignedByte() throws IOException{
 		readTally++;
 		return in.readUnsignedByte();
 		}
 
 	@Override
-	public int readUnsignedShort() throws IOException
-		{
+	public int readUnsignedShort() throws IOException{
 		readTally+=2;
 		return in.readUnsignedShort();
 		}
 
 	@Override
-	public int skipBytes(int n) throws IOException
-		{
+	public int skipBytes(int n) throws IOException{
 		readTally+=n;
 		return in.skipBytes(n);
 		}
@@ -201,46 +182,40 @@ public class EndianAwareDataInputStream extends FilterInputStream implements
 	/**
 	 * @return the order
 	 */
-	public ByteOrder getOrder()
-		{
+	public ByteOrder getOrder(){
 		return order;
 		}
 
 	/**
 	 * @param order the order to set
 	 */
-	public void setOrder(ByteOrder order)
-		{
+	public void setOrder(ByteOrder order){
 		this.order = order;
 		}
 
 	/**
 	 * @return the in
 	 */
-	public DataInputStream getIn()
-		{
+	public DataInputStream getIn(){
 		return in;
 		}
 
 	/**
 	 * @param in the in to set
 	 */
-	public void setIn(DataInputStream in)
-		{
+	public void setIn(DataInputStream in){
 		this.in = in;
 		}
 
 	
 	@Override
-	public void mark(int len)
-		{
+	public void mark(int len){
 		markedReadTally=readTally;
 		in.mark(len);
 		}
 	
 	@Override
-	public void reset() throws IOException
-		{
+	public void reset() throws IOException{
 		readTally=markedReadTally;
 		in.reset();
 		}

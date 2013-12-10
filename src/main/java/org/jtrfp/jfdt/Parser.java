@@ -1,7 +1,8 @@
 /*******************************************************************************
  * This file is part of the JAVA FILE DESCRIPTION TOOLKIT (JFDT)
  * A library for parsing files and mapping their data to/from java Beans.
- * Copyright (c) 2012 Chuck Ritola
+ * ...which is now part of the JAVA TERMINAL REALITY FILE PARSERS project.
+ * Copyright (c) 2012,2013 Chuck Ritola and any contributors to these files.
  * 
  *     JFDT is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -14,7 +15,7 @@
  *     GNU General Public License for more details.
  * 
  *     You should have received a copy of the GNU General Public License
- *     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+ *     along with jTRFP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package org.jtrfp.jfdt;
 
@@ -43,9 +44,7 @@ import java.util.Stack;
  * @author Chuck Ritola
  *
  */
-public class Parser
-	{
-	
+public class Parser{
 	public ParseMode parseMode;
 	
 	public EndianAwareDataInputStream is;
@@ -61,12 +60,10 @@ public class Parser
 	
 	public ByteOrder order(){return order;}
 	
-	public void pushBean(ThirdPartyParseable bean)
-		{
+	public void pushBean(ThirdPartyParseable bean){
 		beanStack.push(bean);
 		}
-	public void order(ByteOrder order)
-		{
+	public void order(ByteOrder order){
 		this.order=order;
 		if(is!=null)is.setOrder(order);
 		if(os!=null)os.setOrder(order);
@@ -82,8 +79,7 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public void readToExistingBean(InputStream is, ThirdPartyParseable target) 
-			throws IllegalAccessException, UnrecognizedFormatException
-		{
+			throws IllegalAccessException, UnrecognizedFormatException{
 		readToExistingBean(new EndianAwareDataInputStream(new DataInputStream(is)),target);
 		}//end readBean(...)
 	
@@ -97,8 +93,7 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public void readToExistingBean(EndianAwareDataInputStream is, ThirdPartyParseable target) 
-			throws IllegalAccessException, UnrecognizedFormatException
-		{
+			throws IllegalAccessException, UnrecognizedFormatException{
 		//target = (CLASS)Beans.instantiate(null, clazz.getName());
 		ensureContextInstantiatedForReading(is,target);
 		target.describeFormat(this);
@@ -110,8 +105,7 @@ public class Parser
 	 * 
 	 * @since Sep 17, 2012
 	 */
-	public void littleEndian()
-		{
+	public void littleEndian(){
 		order(ByteOrder.LITTLE_ENDIAN);
 		}
 	/**
@@ -119,8 +113,7 @@ public class Parser
 	 * 
 	 * @since Sep 17, 2012
 	 */
-	public void bigEndian()
-		{
+	public void bigEndian(){
 		order(ByteOrder.BIG_ENDIAN);
 		}
 	
@@ -136,8 +129,7 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public <CLASS extends ThirdPartyParseable> CLASS readToNewBean(InputStream is, Class <CLASS> clazz) 
-			throws IllegalAccessException, UnrecognizedFormatException
-		{
+			throws IllegalAccessException, UnrecognizedFormatException{
 		return readToNewBean(new EndianAwareDataInputStream(new DataInputStream(is)),clazz);
 		}
 	
@@ -154,11 +146,9 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public <CLASS extends ThirdPartyParseable> CLASS readToNewBean(EndianAwareDataInputStream is, Class <CLASS> clazz) 
-			throws IllegalAccessException, UnrecognizedFormatException
-		{
+			throws IllegalAccessException, UnrecognizedFormatException{
 		CLASS result=null;
-		try
-			{
+		try {
 			result = (CLASS)clazz.newInstance();
 			//result = (CLASS)Beans.instantiate(null, clazz.getName());
 			ensureContextInstantiatedForReading(is,result);
@@ -178,8 +168,7 @@ public class Parser
 	 * @param os
 	 * @since Sep 17, 2012
 	 */
-	public void writeBean(ThirdPartyParseable bean,OutputStream os)
-		{
+	public void writeBean(ThirdPartyParseable bean,OutputStream os){
 		writeBean(bean,new EndianAwareDataOutputStream(new DataOutputStream(os)));
 		}
 	
@@ -189,8 +178,7 @@ public class Parser
 	 * @param os
 	 * @since Sep 17, 2012
 	 */
-	public void writeBean(ThirdPartyParseable bean, EndianAwareDataOutputStream os)
-		{
+	public void writeBean(ThirdPartyParseable bean, EndianAwareDataOutputStream os){
 		if(bean==null)throw new NullPointerException();
 		ensureContextInstantiatedForWriting(os,bean);
 		try{bean.describeFormat(this);}
@@ -198,8 +186,7 @@ public class Parser
 		popBean();
 		}
 	
-	public String readUTF8FileToString(File f) throws FileNotFoundException, IOException
-		{
+	public String readUTF8FileToString(File f) throws FileNotFoundException, IOException{
 		StringBuilder sb = new StringBuilder();
 		FileInputStream fis = new FileInputStream(f);
 		int value;
@@ -211,8 +198,7 @@ public class Parser
 		return sb.toString();
 		}//end readUTF8FileToString(...)
 	
-	private void ensureContextInstantiatedForReading(EndianAwareDataInputStream is, ThirdPartyParseable bean)
-		{
+	private void ensureContextInstantiatedForReading(EndianAwareDataInputStream is, ThirdPartyParseable bean){
 		//if(pc==null) pc= registerParseContext();
 		os=null;this.is=is;
 		pushBean(bean);
@@ -220,8 +206,7 @@ public class Parser
 		parseMode=ParseMode.READ;
 		}
 	
-	private void ensureContextInstantiatedForWriting(EndianAwareDataOutputStream os, ThirdPartyParseable bean)
-		{
+	private void ensureContextInstantiatedForWriting(EndianAwareDataOutputStream os, ThirdPartyParseable bean){
 		//if(pc==null) pc= registerParseContext();
 		this.is=null; this.os=os;
 		pushBean(bean);
@@ -240,11 +225,9 @@ public class Parser
 		try{new PropertyDescriptor(property,obj.getClass()).getWriteMethod().invoke(obj,value);}
 		catch(Exception e){throw new RuntimeException(e);}
 		}*/
-	private <CLASS> CLASS get(ThirdPartyParseable obj, String property, Class <? extends CLASS> propertyReturnClass)
-		{
+	private <CLASS> CLASS get(ThirdPartyParseable obj, String property, Class <? extends CLASS> propertyReturnClass){
 		//System.out.println(clazz.getName()+" object="+obj.getClass());
-		try {if(propertyReturnClass==String.class) 
-				{
+		try {if(propertyReturnClass==String.class){
 				//Object result = new PropertyDescriptor(property,obj.getClass()).getReadMethod().invoke(obj, null);
 				Object result = obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), null).invoke(obj, null);
 				if(!result.getClass().isEnum())return (CLASS)new String(""+result);
@@ -254,10 +237,8 @@ public class Parser
 			}
 		catch(Exception e){throw new RuntimeException(e);}
 		}
-	private void set(ThirdPartyParseable obj, String property, Object value, Class <?> targetClass)
-		{
-		if(value instanceof String)
-			{
+	private void set(ThirdPartyParseable obj, String property, Object value, Class <?> targetClass){
+		if(value instanceof String){
 			if(targetClass==Integer.class||targetClass==int.class)			{value=Integer.parseInt((String)value);}
 			else if(targetClass==Double.class||targetClass==double.class)	{value=Double.parseDouble((String)value);}
 			else if(targetClass==Float.class||targetClass==float.class)		{value=Float.parseFloat((String)value);}
@@ -278,14 +259,12 @@ public class Parser
 		invokeSet(obj,"set"+Character.toUpperCase(property.charAt(0))+property.substring(1),value,value.getClass());
 		}
 	
-	private static void invokeSet(Object obj, String mName, Object value, Class argClass)
-		{
+	private static void invokeSet(Object obj, String mName, Object value, Class argClass){
 		if(argClass==Integer.class)argClass=int.class;
 		if(argClass==Double.class)argClass=double.class;
 		if(argClass==Boolean.class)argClass=boolean.class;
 		try{obj.getClass().getMethod(mName, argClass).invoke(obj, value);}
-		catch(NoSuchMethodException e)
-			{
+		catch(NoSuchMethodException e){
 			if(argClass==Object.class)
 				throw new RuntimeException("Failed to find class for method "+ mName+" in "+obj.getClass().getName());
 			argClass=argClass.getSuperclass();
@@ -331,14 +310,10 @@ public class Parser
 	 * @author Chuck Ritola
 	 *
 	 */
-	protected abstract class RWHelper
-		{
-		public final void go()
-			{
-			try
-				{
-				switch(parseMode)
-					{
+	protected abstract class RWHelper{
+		public final void go(){
+			try {
+				switch(parseMode){
 					case READ:
 						{
 						read(is,peekBean());
@@ -351,13 +326,11 @@ public class Parser
 						}
 					}//end switch{}
 				}//end try{}
-			catch(Exception e)
-				{
+			catch(Exception e){
 				if(e instanceof EOFException && ignoreEOF)
 					{}//Do nothing
 				else if(e instanceof UnrecognizedFormatException)throw new UnrecognizedFormatException();
-				else 
-					{
+				else{
 					e.printStackTrace();
 					System.err.println("... this exception occured while accessing offset "+
 					is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")");
@@ -377,23 +350,17 @@ public class Parser
 	 * @param dest			Bean property to which this data is to be mapped.
 	 * @since Sep 17, 2012
 	 */
-	public void bytesOfCount(final int count, final PropertyDestination dest)
-		{
-		new RWHelper()
-			{
-
+	public void bytesOfCount(final int count, final PropertyDestination dest){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is,
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					byte [] data = new byte[count];
-					if(count>1)
-						{
+					if(count>1){
 						is.readFully(data);
 						dest.set(data, bean);
 						}
-					else if(count==1)
-						{
+					else if(count==1){
 						is.readFully(data);
 						dest.set(data[0], bean);
 						}
@@ -401,16 +368,13 @@ public class Parser
 
 				@Override
 				public void write(EndianAwareDataOutputStream os,
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					//byte [] data = get(bean, d,byte[].class);
 					Object obj = dest.get(bean);
-					if(obj instanceof byte[])
-						{
+					if(obj instanceof byte[]){
 						os.write((byte[])obj);
 						}
-					else
-						{
+					else{
 						os.write(new byte[]{(Byte)obj});
 						}
 					}//end write(...)
@@ -424,19 +388,16 @@ public class Parser
 	 */
 	public void float8(final PropertyDestination<Double> dest)
 		{
-		new RWHelper()
-			{
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is,
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					dest.set(is.readDouble(), bean);
 					}
 
 				@Override
 				public void write(EndianAwareDataOutputStream os,
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.writeDouble(dest.get(bean));
 					}
 			}.go();
@@ -447,21 +408,17 @@ public class Parser
 	 * @param dest
 	 * @since Sep 18, 2012
 	 */
-	public void float4(final PropertyDestination<Float> dest)
-		{
-		new RWHelper()
-			{
+	public void float4(final PropertyDestination<Float> dest){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					dest.set(is.readFloat(), bean);
 					}
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.writeFloat(dest.get(bean));
 					}
 			}.go();
@@ -472,21 +429,17 @@ public class Parser
 	 * @param dest			A long-based property
 	 * @since Sep 17, 2012
 	 */
-	public void int4u(final PropertyDestination<Long> dest)
-		{
-		new RWHelper()
-			{
+	public void int4u(final PropertyDestination<Long> dest){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					dest.set((long)is.readInt()-Integer.MIN_VALUE, bean);
 					}
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.writeInt((int)(dest.get(bean)+Integer.MIN_VALUE));
 					}
 			}.go();
@@ -497,22 +450,17 @@ public class Parser
 	 * @param dest			a long-based property
 	 * @since Sep 18, 2012
 	 */
-	public void int8s(final PropertyDestination<Long> dest)
-		{
-		new RWHelper()
-			{
-
+	public void int8s(final PropertyDestination<Long> dest){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					dest.set(is.readLong(), bean);
 					}
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.writeLong(dest.get(bean));
 					}
 			}.go();
@@ -523,22 +471,17 @@ public class Parser
 	 * @param dest
 	 * @since Sep 17, 2012
 	 */
-	public void int4s(final PropertyDestination<Integer> dest)
-		{
-		new RWHelper()
-			{
-
+	public void int4s(final PropertyDestination<Integer> dest){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					dest.set(is.readInt(), bean);
 					}
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.writeInt(dest.get(bean));
 					}
 			}.go();
@@ -550,8 +493,7 @@ public class Parser
 	 * @return
 	 * @since Sep 17, 2012
 	 */
-	public byte []  flipEndian(final byte [] bytes)
-		{
+	public byte []  flipEndian(final byte [] bytes){
 		//Flip endian and try again.
 		byte [] w = new byte[bytes.length];
 		for(int i=0; i<bytes.length;i++)
@@ -566,14 +508,11 @@ public class Parser
 	 * @param failureBehavior	What to do if the expected bytes are not available
 	 * @since Sep 17, 2012
 	 */
-	public void expectBytes(final byte [] bytes, final FailureBehavior failureBehavior)
-		{
-		new RWHelper()
-			{
+	public void expectBytes(final byte [] bytes, final FailureBehavior failureBehavior){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					byte [] b = new byte[bytes.length];
 					//System.out.println("b.length="+b.length+" pos="+is.getReadTally());
 					is.mark(b.length);
@@ -592,12 +531,10 @@ public class Parser
 						}
 					System.out.println();
 					*/
-					if(!Arrays.equals(b,bytes))
-						{
+					if(!Arrays.equals(b,bytes)){
 						//System.out.println("No match. Position prior to resetting: "+is.getReadTally());
 						is.reset();//reset, assuming the string is simply missing. //TODO: Smarter handling? Approximation?
-						if(failureBehavior==FailureBehavior.UNRECOGNIZED_FORMAT)
-							{
+						if(failureBehavior==FailureBehavior.UNRECOGNIZED_FORMAT){
 							/*
 							System.out.print("Expected: ");
 							for(byte thisByte:bytes)
@@ -613,8 +550,7 @@ public class Parser
 							*/
 							throw new UnrecognizedFormatException();
 							}//end if(throwException)
-						else if(failureBehavior==FailureBehavior.FLIP_ENDIAN)
-							{
+						else if(failureBehavior==FailureBehavior.FLIP_ENDIAN){
 							byte [] w = flipEndian(bytes);
 							expectBytes(w,FailureBehavior.UNRECOGNIZED_FORMAT);//Throws and escapes on fail
 							//Success. Toggle endian.
@@ -628,8 +564,7 @@ public class Parser
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					byte [] buf;
 					buf=bytes;
 					if(order()==ByteOrder.LITTLE_ENDIAN)buf=flipEndian(bytes);
@@ -644,8 +579,7 @@ public class Parser
 	 * @param failureBehavior
 	 * @since Sep 17, 2012
 	 */
-	public void expectString(final String string, FailureBehavior failureBehavior)
-		{
+	public void expectString(final String string, FailureBehavior failureBehavior){
 		expectBytes(string.getBytes(),failureBehavior);
 		}//end expectBytes
 	
@@ -656,25 +590,19 @@ public class Parser
 	 * @param includeEndingWhenReading
 	 * @since Sep 17, 2012
 	 */
-	public void bytesEndingWith(final byte [] ending, final PropertyDestination targetProperty, final boolean includeEndingWhenReading)
-		{
-		new RWHelper()
-			{
-
+	public void bytesEndingWith(final byte [] ending, final PropertyDestination targetProperty, final boolean includeEndingWhenReading){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is,
 						 ThirdPartyParseable bean)
-						throws IOException
-					{
+						throws IOException{
 					ArrayList<Byte>bytes= new ArrayList<Byte>();
-					try
-						{
+					try {
 						if(ending==null)
 							{//Read til EOF
 							while(true){bytes.add(is.readByte());}
 							}
-						else 
-							{
+						else{
 							throw new RuntimeException("Feature not implemented yet: bytesEndingWith, using non-null ending.");
 							//stringEndingWith(new String(ending),targetProperty,includeEndingWhenReading);
 							}
@@ -689,8 +617,7 @@ public class Parser
 				@Override
 				public void write(EndianAwareDataOutputStream os,
 						 ThirdPartyParseable bean)
-						throws IOException
-					{
+						throws IOException{
 					os.write((byte [])targetProperty.get(bean));
 					if(!includeEndingWhenReading&&ending!=null)os.write(ending);
 					}
@@ -698,8 +625,7 @@ public class Parser
 			}.go();
 		}
 	
-	protected static <CLASS> CLASS convertFromString(String s,Class<CLASS>targetClass) throws NumberFormatException
-		{
+	protected static <CLASS> CLASS convertFromString(String s,Class<CLASS>targetClass) throws NumberFormatException{
 		Object result=null;
 
 		if(targetClass==Integer.class||targetClass==int.class){result=Integer.parseInt(s);}
@@ -718,8 +644,7 @@ public class Parser
 	 *
 	 * @param <PROPERTY_CLASS>
 	 */
-	public abstract class PropertyDestination<PROPERTY_CLASS>
-		{
+	public abstract class PropertyDestination<PROPERTY_CLASS>{
 		Class<PROPERTY_CLASS>propertyClass; public Class<PROPERTY_CLASS>getPropertyClass(){return propertyClass;}
 		public PropertyDestination(Class<PROPERTY_CLASS> propertyClass){this.propertyClass=propertyClass;}
 		public abstract void set(PROPERTY_CLASS value, ThirdPartyParseable bean);
@@ -732,8 +657,7 @@ public class Parser
 		 * @return
 		 * @since Sep 17, 2012
 		 */
-		public String getAsString(ThirdPartyParseable bean)
-			{
+		public String getAsString(ThirdPartyParseable bean){
 			Object result = get(bean);
 			if(result.getClass().isEnum())return (((Enum)result).ordinal()+"");
 			else if(result.getClass()==boolean.class || result.getClass()==Boolean.class)return ((Boolean)result)?"1":"0";
@@ -749,23 +673,19 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public<PROPERTY_CLASS> PropertyDestination<PROPERTY_CLASS> 
-			property(final String propertyName, final Class <PROPERTY_CLASS>elementType)
-		{
-		return new PropertyDestination<PROPERTY_CLASS>(elementType)
-			{
+			property(final String propertyName, final Class <PROPERTY_CLASS>elementType){
+		return new PropertyDestination<PROPERTY_CLASS>(elementType){
 			@Override
-			public void set(PROPERTY_CLASS value, ThirdPartyParseable bean)
-				{
+			public void set(PROPERTY_CLASS value, ThirdPartyParseable bean){
 				Parser.this.set(bean, propertyName, value, elementType);
 				}
 
 			@Override
-			public PROPERTY_CLASS get(ThirdPartyParseable bean)
-				{
+			public PROPERTY_CLASS get(ThirdPartyParseable bean){
 				return Parser.this.get(bean, propertyName, elementType);
 				}
 			};
-		}
+		}//end property(...)
 			
 	/**
 	 * Returns a PropertyDestination representing the given property name, type, and index given the bean property is indexed.<br>
@@ -777,14 +697,11 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public<PROPERTY_CLASS extends Object> PropertyDestination<PROPERTY_CLASS> 
-			indexedProperty(final String propertyName,final Class<PROPERTY_CLASS>elementType,final int arrayIndex)
-		{
-		return new PropertyDestination<PROPERTY_CLASS>(elementType)
-					{
+			indexedProperty(final String propertyName,final Class<PROPERTY_CLASS>elementType,final int arrayIndex){
+		return new PropertyDestination<PROPERTY_CLASS>(elementType){
 						@Override
 						public void set(PROPERTY_CLASS value,
-								ThirdPartyParseable bean)
-							{
+								ThirdPartyParseable bean){
 							//System.out.println("elementType="+elementType);
 							Object nilArray = Array.newInstance(elementType, 0);
 							Object array = Parser.this.get(bean, propertyName, nilArray.getClass());
@@ -797,8 +714,7 @@ public class Parser
 								Array.set(array, arrayIndex, value);
 								//array[arrayIndex]=value;
 								}
-							else
-								{//Need to resize
+							else{//Need to resize
 								nilArray = Array.newInstance(elementType, arrayIndex+1);
 								System.arraycopy(array, 0, nilArray, 0, Array.getLength(array));
 								array=nilArray;
@@ -819,7 +735,6 @@ public class Parser
 							}
 					};
 		}//end property(...)
-	
 			
 	/**
 	 * Tells the Parser that there is an arbitrary-length string in the current position in the description until it finds the specified ending. When writing with includeEndingWhenReading false, the ending is automatically
@@ -830,33 +745,25 @@ public class Parser
 	 * @since Sep 17, 2012
 	 */
 	public <CLASS>void stringEndingWith(final String ending,final PropertyDestination<CLASS> property,
-			final boolean includeEndingWhenReading)
-		{
-		new RWHelper()
-			{
+			final boolean includeEndingWhenReading){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					String string ="";
-					if(ending!=null)
-						{
+					if(ending!=null){
 						while(!string.endsWith(ending))
 							{string+=((char)is.readByte());}
 						if(!includeEndingWhenReading)
 							{string=string.substring(0, (string.length()-ending.length()));}
 						}//end if(ending!=null)
-					else 
-						{// null.
-						try
-							{while(true)//heheh.
+					else{// null.
+						try {while(true)//heheh.
 								{string+=((char)is.readByte());}
 							}//end try{}
 						catch(EOFException e){}//This is to detect the EOF.
 						if(!includeEndingWhenReading)
-							{
-							string=string.substring(0, (string.length()));
-							}
+							{string=string.substring(0, (string.length()));}
 						}//end null-ending (go until EOF)
 					//System.out.println("property.getPropertyClass()="+property.getPropertyClass());
 					//System.out.println("stringEndingWith got "+string);
@@ -866,26 +773,21 @@ public class Parser
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.write(property.getAsString(bean).getBytes());
 					if(ending!=null)os.write(ending.getBytes());
 					}
-			
 			}.go();
 		}//end stringEndingWith(...)
 	
 	//TODO: Documentation
 	
 	public <CLASS>void stringEndingWith(final String ending,final StringParser sParser,final PropertyDestination<CLASS> property,
-			final boolean includeEndingWhenReading)
-		{
-		new RWHelper()
-			{
+			final boolean includeEndingWhenReading){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					String string ="";
 					if(ending!=null)
 						{
@@ -894,15 +796,12 @@ public class Parser
 						if(!includeEndingWhenReading)
 							{string=string.substring(0, (string.length()-ending.length()));}
 						}//end if(ending!=null)
-					else 
-						{// null.
-						try
-							{while(true)//heheh.
+					else{// null.
+						try {while(true)//heheh.
 								{string+=((char)is.readByte());}
 							}//end try{}
 						catch(EOFException e){}//This is to detect the EOF.
-						if(!includeEndingWhenReading)
-							{
+						if(!includeEndingWhenReading){
 							string=string.substring(0, (string.length()));
 							}
 						}//end null-ending (go until EOF)
@@ -913,8 +812,7 @@ public class Parser
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					os.write(sParser.parseWrite(bean).getBytes());
 					//os.write(property.getAsString(bean).getBytes());
 					if(ending!=null)os.write(ending.getBytes());
@@ -930,22 +828,18 @@ public class Parser
 	 * @param inclusions		The class or classes to attempt to use when reading (automatically determined when writing)
 	 * @since Sep 17, 2012
 	 */
-	public <CLASS extends ThirdPartyParseable>void subParseProposedClasses(final PropertyDestination<CLASS> pDest, final ClassInclusion ... inclusions)
-		{
-		new RWHelper()
-			{
+	public <CLASS extends ThirdPartyParseable>void subParseProposedClasses(final PropertyDestination<CLASS> pDest, final ClassInclusion ... inclusions){
+		new RWHelper(){
 			@Override
 			public void read(EndianAwareDataInputStream is, 
-					ThirdPartyParseable bean) throws IOException
-				{
+					ThirdPartyParseable bean) throws IOException{
 				ArrayList<Class> classes = new ArrayList<Class>();
 				//System.out.println("read()...");
 				for(ClassInclusion inc:inclusions)
 					{Collections.addAll(classes, inc.propose());}
 				if(classes.size()==0)throw new RuntimeException("No inclusion classes given. Need at least one. Trouble ahead...");
 				CLASS obj=null;
-				for(Class c:classes)
-					{
+				for(Class c:classes){
 					//System.out.println("Parser.subParseProposedClasses() trying class "+c.getName());
 					try{obj=(CLASS)readToNewBean(is, (Class<? extends ThirdPartyParseable>)c);break;}//break from the loop if successful.
 					catch(IllegalAccessException e){e.printStackTrace();}
@@ -955,8 +849,7 @@ public class Parser
 				//System.out.println("subParseProposedClasses() obj="+obj+" bean="+bean);
 				if(obj!=null){pDest.set(obj, bean);}
 				//Fail
-				else
-					{
+				else{
 					long readTally=is.getReadTally();
 					System.out.println("None of the supplied classes match at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");new Exception().printStackTrace();
 					}
@@ -964,14 +857,12 @@ public class Parser
 
 			@Override
 			public void write(EndianAwareDataOutputStream os, 
-					ThirdPartyParseable bean) throws IOException
-				{
+					ThirdPartyParseable bean) throws IOException{
 				if(bean==null)throw new NullPointerException();
 				if(pDest==null)throw new NullPointerException();
 				if(pDest.get(bean)==null)throw new NullPointerException();
 				writeBean(pDest.get(bean),os);
 				}
-			
 			}.go();
 		}//end subParseProposedClasses(...)
 	/*
@@ -1069,8 +960,7 @@ public class Parser
 	 * @param properties
 	 * @since Sep 17, 2012
 	 */
-	public void stringCSVEndingWith(final String ending, final Class<?> propertyType, final boolean includeEndingWhenReading,String ... properties)
-		{
+	public void stringCSVEndingWith(final String ending, final Class<?> propertyType, final boolean includeEndingWhenReading,String ... properties){
 		for(int i=0; i<properties.length-1;i++)
 			{stringEndingWith(",",property(properties[i],propertyType),includeEndingWhenReading);}
 		stringEndingWith(ending,property(properties[properties.length-1],propertyType),includeEndingWhenReading);
@@ -1136,14 +1026,11 @@ public class Parser
 	 * @param dest
 	 * @since Sep 17, 2012
 	 */
-	public<CLASS> void stringOfLength(final int propertyNumBytes, final PropertyDestination<CLASS> dest)
-		{
-		new RWHelper()
-			{
+	public<CLASS> void stringOfLength(final int propertyNumBytes, final PropertyDestination<CLASS> dest){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					byte [] buffer = new byte[propertyNumBytes];
 					is.readFully(buffer);
 					//Strip non-print chars
@@ -1157,14 +1044,12 @@ public class Parser
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					//os.write(get(bean,targetProperty,String.class).getBytes());
 					byte [] raw = dest.get(bean).toString().getBytes();
 					byte [] result = new byte[propertyNumBytes];
 					//TODO: Use arraycopy
-					for(int i=0; i<result.length;i++)
-						{
+					for(int i=0; i<result.length;i++){
 						try{result[i]=raw[i];}
 						catch(ArrayIndexOutOfBoundsException e)
 							{result[i]=0x0;}
@@ -1224,37 +1109,29 @@ public class Parser
 	 * @param elementClass			The element type for the array-type property being mapped.
 	 * @since Sep 17, 2012
 	 */
-	public <CLASS extends ThirdPartyParseable> void arrayOf(final int count, final String arrayPropertyName, final Class <CLASS> elementClass)
-		{
-		new RWHelper()
-			{
+	public <CLASS extends ThirdPartyParseable> void arrayOf(final int count, final String arrayPropertyName, final Class <CLASS> elementClass){
+		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					//final int count = get(bean,countProperty,Integer.class);
 					ArrayList<CLASS>objectsToMake = new ArrayList<CLASS>();
-					for(int i=0; i<count; i++)
-						{
+					for(int i=0; i<count; i++){
 						try{objectsToMake.add(readToNewBean(is, elementClass));}
 						catch(IllegalAccessException e){e.printStackTrace();}
 						catch(UnrecognizedFormatException e){e.printStackTrace();}
 						}//end for(count)
 					set(bean,arrayPropertyName,objectsToMake.toArray((CLASS [])Array.newInstance(elementClass, 0)),null);
-					}
+					}//end read(...)
 
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
-						ThirdPartyParseable bean) throws IOException
-					{
+						ThirdPartyParseable bean) throws IOException{
 					CLASS [] array = get(bean,arrayPropertyName, (Class<CLASS []>)Array.newInstance(elementClass, 0).getClass());
 					
 					for(CLASS item:array)
-						{
-						writeBean(item,os);
-						}//end for(count)
+						{writeBean(item,os);}
 					}//end write(...)
-			
 			}.go();
 		}//end arrayOf(...)
 /*
@@ -1282,14 +1159,12 @@ public class Parser
 		}//end subParse(...)
 	*/
 
-	public void dumpState()
-		{
+	public void dumpState(){
 		System.err.println("Dumping state:");
 		new Exception().printStackTrace();
 		System.err.println("current read tally: "+is.getReadTally()+" bytes. Or offset 0x"+Long.toHexString(is.getReadTally()));
 		System.err.println("Bean stack: ");
-		for(ThirdPartyParseable b: beanStack)
-			{
+		for(ThirdPartyParseable b: beanStack){
 			System.err.println("\t"+b.getClass().getSimpleName());
 			}
 		}//end kaboom
