@@ -19,7 +19,6 @@
  ******************************************************************************/
 package org.jtrfp.jfdt;
 
-import java.beans.PropertyDescriptor;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -30,10 +29,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Stack;
 
 
@@ -227,16 +228,24 @@ public class Parser{
 		}*/
 	private <CLASS> CLASS get(ThirdPartyParseable obj, String property, Class <? extends CLASS> propertyReturnClass){
 		//System.out.println(clazz.getName()+" object="+obj.getClass());
-		try {if(propertyReturnClass==String.class){
+		try {
+			Method meth = obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), null);
+			if(propertyReturnClass==String.class){
 				//Object result = new PropertyDescriptor(property,obj.getClass()).getReadMethod().invoke(obj, null);
-				Object result = obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), null).invoke(obj, null);
+				Object result = meth.invoke(obj, null);
 				if(!result.getClass().isEnum())return (CLASS)new String(""+result);
 				else return (CLASS)(((Enum)result).ordinal()+"");
 				}
-			return (CLASS)obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), null).invoke(obj, null);
+			return (CLASS)meth.invoke(obj, null);
 			}
 		catch(Exception e){throw new RuntimeException(e);}
 		}
+	
+	private Class getPropertyReturnType(ThirdPartyParseable obj, String property) throws NoSuchMethodException
+		{
+		return obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), null).getReturnType();
+		}
+	
 	private void set(ThirdPartyParseable obj, String property, Object value, Class <?> targetClass){
 		if(value instanceof String){
 			if(targetClass==Integer.class||targetClass==int.class)			{value=Integer.parseInt((String)value);}
@@ -703,36 +712,59 @@ public class Parser{
 						public void set(PROPERTY_CLASS value,
 								ThirdPartyParseable bean){
 							//System.out.println("elementType="+elementType);
-							Object nilArray = Array.newInstance(elementType, 0);
+							Object nilArray = Array.newInstance(elementType, 0);//TODO: Move this allocation to later branch
 							Object array = Parser.this.get(bean, propertyName, nilArray.getClass());
-							if(array==null)array= Array.newInstance(elementType, 1);
-							assert array!=null:"array should not be null at this point. Trouble ahead.";
-							//Guaranteed an array here
-							if(arrayIndex<0)throw new IndexOutOfBoundsException(""+arrayIndex);
-							if(arrayIndex<Array.getLength(array)-1)
-								{//Set the value
-								Array.set(array, arrayIndex, value);
-								//array[arrayIndex]=value;
+							Class indexingClass=null;
+							try{indexingClass=Parser.this.getPropertyReturnType(bean, propertyName);}
+							catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+							if(List.class.isAssignableFrom(indexingClass))
+								{//Lists scale up far better than arrays.
+								if(array==null)
+									{//Not yet initialized
+									array=new ArrayList();
+									Parser.this.set(bean,propertyName, array, indexingClass);//Install new
+									}
+								final List<PROPERTY_CLASS> list = (List<PROPERTY_CLASS>)array;
+								list.add(arrayIndex,value);
 								}
-							else{//Need to resize
-								nilArray = Array.newInstance(elementType, arrayIndex+1);
-								System.arraycopy(array, 0, nilArray, 0, Array.getLength(array));
-								array=nilArray;
-								Array.set(array, arrayIndex, value);
+							else{
+								if(array==null)array= Array.newInstance(elementType, 1);
+								assert array!=null:"array should not be null at this point. Trouble ahead.";
+								//Guaranteed an array here
+								if(arrayIndex<0)throw new IndexOutOfBoundsException(""+arrayIndex);
+								if(arrayIndex<Array.getLength(array)-1)
+									{//Set the value
+									Array.set(array, arrayIndex, value);
+									//array[arrayIndex]=value;
+									}
+								else{//Need to resize
+									nilArray = Array.newInstance(elementType, arrayIndex+1);
+									System.arraycopy(array, 0, nilArray, 0, Array.getLength(array));
+									array=nilArray;
+									Array.set(array, arrayIndex, value);
+									}
+								if(array==null) throw new NullPointerException("array should not be null at this point. Trouble ahead.");
+								//Update
+								Parser.this.set(bean, propertyName, array, array.getClass());
 								}
-							if(array==null) throw new NullPointerException("array should not be null at this point. Trouble ahead.");
-							//Update
-							Parser.this.set(bean, propertyName, array, array.getClass());
 							}//end set(...)
 
 						@Override
 						public PROPERTY_CLASS get(ThirdPartyParseable bean)
 							{
-							final Class<PROPERTY_CLASS> arrayClass = (Class<PROPERTY_CLASS>)(Array.newInstance(elementType, 0).getClass());
-							PROPERTY_CLASS result = (PROPERTY_CLASS)Array.get((Parser.this.get(bean, propertyName,arrayClass)),arrayIndex);
-							//System.out.println("indexedProperty.get("+arrayIndex+") returning "+result);
-							return result;
-							}
+							Class indexingClass=null;
+							try{indexingClass=Parser.this.getPropertyReturnType(bean, propertyName);}
+							catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+							if(List.class.isAssignableFrom(indexingClass))
+								{List<PROPERTY_CLASS> list = (List<PROPERTY_CLASS>)Parser.this.get(bean, propertyName,indexingClass);
+								return list.get(arrayIndex);
+								}
+							else{final Class<PROPERTY_CLASS> arrayClass = (Class<PROPERTY_CLASS>)(Array.newInstance(elementType, 0).getClass());
+								PROPERTY_CLASS result = (PROPERTY_CLASS)Array.get((Parser.this.get(bean, propertyName,arrayClass)),arrayIndex);
+								//System.out.println("indexedProperty.get("+arrayIndex+") returning "+result);
+								return result;
+								}
+							}//end get(...)
 					};
 		}//end property(...)
 			
