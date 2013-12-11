@@ -812,7 +812,14 @@ public class Parser{
 			}.go();
 		}//end stringEndingWith(...)
 	
-	//TODO: Documentation
+	/**
+	 * Tells the parser that there is a String at the current position, ending with the specified pattern.
+	 * @param ending	String pattern describing the ending of this string.
+	 * @param sParser	Special String parser to convert said String into some other type of Object
+	 * @param property	Target bean PropertyDestination to which to apply this relation.
+	 * @param includeEndingWhenReading
+	 * @since Dec 10, 2013
+	 */
 	
 	public <CLASS>void stringEndingWith(final String ending,final StringParser sParser,final PropertyDestination<CLASS> property,
 			final boolean includeEndingWhenReading){
