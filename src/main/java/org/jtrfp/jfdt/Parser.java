@@ -699,14 +699,14 @@ public class Parser{
 	/**
 	 * Returns a PropertyDestination representing the given property name, type, and index given the bean property is indexed.<br>
 	 * When reading, will automatically re-size (re-allocate, really) the array if the index too high, then add the items, Expect this to be slow.
-	 * @param propertyName
-	 * @param elementType
-	 * @param arrayIndex
-	 * @return
+	 * @param propertyName	The name of the property, not including the 'get' or 'set' prefix.
+	 * @param elementType	The type of element to be set at the given index.
+	 * @param index	Index in the array or List at which to perform the set or get.
+	 * @return	An indexed PropertyDestination with the supplied traits.
 	 * @since Sep 17, 2012
 	 */
 	public<PROPERTY_CLASS extends Object> PropertyDestination<PROPERTY_CLASS> 
-			indexedProperty(final String propertyName,final Class<PROPERTY_CLASS>elementType,final int arrayIndex){
+			indexedProperty(final String propertyName,final Class<PROPERTY_CLASS>elementType,final int index){
 		return new PropertyDestination<PROPERTY_CLASS>(elementType){
 						@Override
 						public void set(PROPERTY_CLASS value,
@@ -725,23 +725,23 @@ public class Parser{
 									Parser.this.set(bean,propertyName, array, indexingClass);//Install new
 									}
 								final List<PROPERTY_CLASS> list = (List<PROPERTY_CLASS>)array;
-								list.add(arrayIndex,value);
+								list.add(index,value);
 								}
 							else{
 								if(array==null)array= Array.newInstance(elementType, 1);
 								assert array!=null:"array should not be null at this point. Trouble ahead.";
 								//Guaranteed an array here
-								if(arrayIndex<0)throw new IndexOutOfBoundsException(""+arrayIndex);
-								if(arrayIndex<Array.getLength(array)-1)
+								if(index<0)throw new IndexOutOfBoundsException(""+index);
+								if(index<Array.getLength(array)-1)
 									{//Set the value
-									Array.set(array, arrayIndex, value);
+									Array.set(array, index, value);
 									//array[arrayIndex]=value;
 									}
 								else{//Need to resize
-									nilArray = Array.newInstance(elementType, arrayIndex+1);
+									nilArray = Array.newInstance(elementType, index+1);
 									System.arraycopy(array, 0, nilArray, 0, Array.getLength(array));
 									array=nilArray;
-									Array.set(array, arrayIndex, value);
+									Array.set(array, index, value);
 									}
 								if(array==null) throw new NullPointerException("array should not be null at this point. Trouble ahead.");
 								//Update
@@ -757,10 +757,10 @@ public class Parser{
 							catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
 							if(List.class.isAssignableFrom(indexingClass))
 								{List<PROPERTY_CLASS> list = (List<PROPERTY_CLASS>)Parser.this.get(bean, propertyName,indexingClass);
-								return list.get(arrayIndex);
+								return list.get(index);
 								}
 							else{final Class<PROPERTY_CLASS> arrayClass = (Class<PROPERTY_CLASS>)(Array.newInstance(elementType, 0).getClass());
-								PROPERTY_CLASS result = (PROPERTY_CLASS)Array.get((Parser.this.get(bean, propertyName,arrayClass)),arrayIndex);
+								PROPERTY_CLASS result = (PROPERTY_CLASS)Array.get((Parser.this.get(bean, propertyName,arrayClass)),index);
 								//System.out.println("indexedProperty.get("+arrayIndex+") returning "+result);
 								return result;
 								}
@@ -1137,11 +1137,11 @@ public class Parser{
 	/**
 	 * Tells the parser that the current position in the description contains a series of parseable objects which may or may not be primitive.
 	 * @param count					Number of objects to parse.
-	 * @param arrayPropertyName		Array-type property to which this data is mapped.
+	 * @param arrayOrListPropertyName		Array-type or List property to which this data is mapped.
 	 * @param elementClass			The element type for the array-type property being mapped.
 	 * @since Sep 17, 2012
 	 */
-	public <CLASS extends ThirdPartyParseable> void arrayOf(final int count, final String arrayPropertyName, final Class <CLASS> elementClass){
+	public <CLASS extends ThirdPartyParseable> void arrayOf(final int count, final String arrayOrListPropertyName, final Class <CLASS> elementClass){
 		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
@@ -1150,7 +1150,7 @@ public class Parser{
 					ArrayList<CLASS>objectsToMake = new ArrayList<CLASS>();
 
 					Class indexingClass=null;
-					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayPropertyName);}
+					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayOrListPropertyName);}
 					catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
 					
 					for(int i=0; i<count; i++){
@@ -1158,8 +1158,8 @@ public class Parser{
 						catch(IllegalAccessException e){e.printStackTrace();}
 						catch(UnrecognizedFormatException e){e.printStackTrace();}
 						}//end for(count)
-					if(List.class.isAssignableFrom(indexingClass)) set(bean,arrayPropertyName,objectsToMake,null);
-					else set(bean,arrayPropertyName,objectsToMake.toArray((CLASS [])Array.newInstance(elementClass, 0)),null);
+					if(List.class.isAssignableFrom(indexingClass)) set(bean,arrayOrListPropertyName,objectsToMake,null);
+					else set(bean,arrayOrListPropertyName,objectsToMake.toArray((CLASS [])Array.newInstance(elementClass, 0)),null);
 					}//end read(...)
 
 				@Override
@@ -1167,16 +1167,16 @@ public class Parser{
 						ThirdPartyParseable bean) throws IOException{
 					
 					Class indexingClass=null;
-					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayPropertyName);}
+					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayOrListPropertyName);}
 					catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
 					
 					if(List.class.isAssignableFrom(indexingClass)) 
-						{List<CLASS> list = (List<CLASS>)get(bean,arrayPropertyName, indexingClass);
+						{List<CLASS> list = (List<CLASS>)get(bean,arrayOrListPropertyName, indexingClass);
 						for(CLASS item:list)
 							{writeBean(item,os);}
 						}
 					else{
-						CLASS [] array = get(bean,arrayPropertyName, (Class<CLASS []>)Array.newInstance(elementClass, 0).getClass());
+						CLASS [] array = get(bean,arrayOrListPropertyName, (Class<CLASS []>)Array.newInstance(elementClass, 0).getClass());
 						for(CLASS item:array)
 							{writeBean(item,os);}
 						}//end if(array)
