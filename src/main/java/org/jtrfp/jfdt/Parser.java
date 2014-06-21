@@ -525,7 +525,13 @@ public class Parser{
 					byte [] b = new byte[bytes.length];
 					//System.out.println("b.length="+b.length+" pos="+is.getReadTally());
 					is.mark(b.length);
-					is.readFully(b);
+					try{is.readFully(b);}
+					catch(EOFException e){
+					    if(failureBehavior == FailureBehavior.UNRECOGNIZED_FORMAT)
+						throw new UnrecognizedFormatException();
+					    else throw e;// No solution found.
+					    // FLIP_ENDIAN isn't going to help here so it won't be considered.
+					}//end catch(EOFException)
 					if(order()==ByteOrder.LITTLE_ENDIAN){b=flipEndian(b);/*System.out.println("endian mode is little. Flipping input.");*/}
 					/*
 					System.out.print("Expected: ");
