@@ -34,6 +34,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 
@@ -773,7 +774,20 @@ public class Parser{
 							}//end get(...)
 					};
 		}//end property(...)
-			
+
+			/**
+			 * Tells the Parser that there is an arbitrary-length string in the current position in the description until it finds the specified ending. When writing with includeEndingWhenReading false, the ending is automatically
+			 * written to the file.
+			 * @param ending
+			 * @param property						The bean property to map to/from this String.
+			 * @param includeEndingWhenReading		Include the specified ending when reading, and do not write the specified ending when writing, assuming that it is already in the property's String.
+			 * @since Sep 17, 2012
+			 */
+			public <CLASS>void stringEndingWith(final String ending,final PropertyDestination<CLASS> property,
+					final boolean includeEndingWhenReading){
+			    stringEndingWith(new String[]{ending},property,includeEndingWhenReading);
+			}
+
 	/**
 	 * Tells the Parser that there is an arbitrary-length string in the current position in the description until it finds the specified ending. When writing with includeEndingWhenReading false, the ending is automatically
 	 * written to the file.
@@ -782,18 +796,34 @@ public class Parser{
 	 * @param includeEndingWhenReading		Include the specified ending when reading, and do not write the specified ending when writing, assuming that it is already in the property's String.
 	 * @since Sep 17, 2012
 	 */
-	public <CLASS>void stringEndingWith(final String ending,final PropertyDestination<CLASS> property,
+	public <CLASS>void stringEndingWith(String[] endings,final PropertyDestination<CLASS> property,
 			final boolean includeEndingWhenReading){
+	    if(endings!=null){
+		if(endings.length>0)
+	         Arrays.sort(endings, new Comparator<String>(){
+		    @Override
+		    public int compare(String l, String r) {//Reversed; sort large to small
+			return r.length()-l.length();
+		    }});
+		else endings=null;
+		}//end if(null)
+	    final String [] ending = endings;
 		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
 						ThirdPartyParseable bean) throws IOException{
 					String string ="";
 					if(ending!=null){
-						while(!string.endsWith(ending))
-							{string+=((char)is.readByte());}
+					    	String endingFound=null;
+					    	while(endingFound==null){
+					    	 string+=((char)is.readByte());
+					    	 for(String test:ending)
+					    	     if(string.endsWith(test)){
+					    		 endingFound=test; break;
+					    		 }//end for(endings)
+					    	}//end while(!endingFound)
 						if(!includeEndingWhenReading)
-							{string=string.substring(0, (string.length()-ending.length()));}
+							{string=string.substring(0, (string.length()-endingFound.length()));}
 						}//end if(ending!=null)
 					else{// null.
 						try {while(true)//heheh.
@@ -813,7 +843,9 @@ public class Parser{
 				public void write(EndianAwareDataOutputStream os, 
 						ThirdPartyParseable bean) throws IOException{
 					os.write(property.getAsString(bean).getBytes());
-					if(ending!=null)os.write(ending.getBytes());
+					if(ending!=null)
+					    if(ending[0]!=null)
+						os.write(ending[0].getBytes());
 					}
 			}.go();
 		}//end stringEndingWith(...)
