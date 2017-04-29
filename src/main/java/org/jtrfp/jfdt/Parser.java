@@ -38,8 +38,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Stack;
 
-import org.jtrfp.jfdt.FailureBehavior;
-
 
 /**
  * Utility class typically used from a ThirdPartyParseable's format description 'describeFormat()' method.<br>
@@ -72,6 +70,8 @@ public class Parser{
 		if(is!=null)is.setOrder(order);
 		if(os!=null)os.setOrder(order);
 		}
+	
+	private static final UnrecognizedFormatException UNRECOGNIZED_FORMAT_EXCEPTION = new UnrecognizedFormatException();
 	
 	/**
 	 * Read the specified InputStream, parsing it and writing the property values to the given instantiated bean.<br>
@@ -345,7 +345,7 @@ public class Parser{
 			catch(Exception e){
 				if(e instanceof EOFException && ignoreEOF)
 					{}//Do nothing
-				else if(e instanceof UnrecognizedFormatException)throw new UnrecognizedFormatException();
+				else if(e instanceof UnrecognizedFormatException)throw UNRECOGNIZED_FORMAT_EXCEPTION;
 				else{
 					e.printStackTrace();
 					System.err.println("... this exception occured while accessing offset "+
@@ -538,7 +538,7 @@ public class Parser{
 					try{is.readFully(b);}
 					catch(EOFException e){
 					    if(failureBehavior == FailureBehavior.UNRECOGNIZED_FORMAT)
-						throw new UnrecognizedFormatException();
+						throw UNRECOGNIZED_FORMAT_EXCEPTION;
 					    else throw e;// No solution found.
 					    // FLIP_ENDIAN isn't going to help here so it won't be considered.
 					}//end catch(EOFException)
@@ -573,7 +573,7 @@ public class Parser{
 								}
 							System.out.println();
 							*/
-							throw new UnrecognizedFormatException();
+							throw UNRECOGNIZED_FORMAT_EXCEPTION;
 							}//end if(throwException)
 						else if(failureBehavior==FailureBehavior.FLIP_ENDIAN){
 							byte [] w = flipEndian(bytes);
