@@ -49,6 +49,7 @@ public class TestParser{
 	public TestParser(String testFilePath, String testTempPath, String beanClassName){
 		Parser prs = new Parser();
 		try {
+			@SuppressWarnings("unchecked")
 			ThirdPartyParseable obj = prs.readToNewBean(new EndianAwareDataInputStream(new DataInputStream(new BufferedInputStream(new FileInputStream(testFilePath)))), (Class<? extends ThirdPartyParseable>)Class.forName(beanClassName));
 			
 			printBean(obj);
@@ -78,10 +79,10 @@ public class TestParser{
 	 */
 	public static void printBean(ThirdPartyParseable obj) throws Exception{
 		for(PropertyDescriptor prop:Introspector.getBeanInfo(obj.getClass(), Introspector.USE_ALL_BEANINFO).getPropertyDescriptors()){
-			Object value = prop.getReadMethod().invoke(obj, null);
+			Object value = prop.getReadMethod().invoke(obj);
 			System.out.println("Property: "+prop.getName()+" \t\tValue: "+value);
 			if(value.getClass().isArray()){
-				Class<?>componentClass=value.getClass().getComponentType();
+				//Class<?>componentClass=value.getClass().getComponentType();
 				if(ThirdPartyParseable.class.isAssignableFrom(value.getClass().getComponentType())){
 					for(ThirdPartyParseable elm:(ThirdPartyParseable [])value)
 						{printBean(elm);}
@@ -114,10 +115,12 @@ public class TestParser{
 		}
 	
 	public static byte [] readToBytes(File f) throws IOException{
-		DataInputStream di1=new DataInputStream(new FileInputStream(f));
-		byte [] result = new byte[(int)f.length()];
-		di1.read(result);
-		return result;
+		DataInputStream di1=null;
+		try {di1=new DataInputStream(new FileInputStream(f));
+		 byte [] result = new byte[(int)f.length()];
+		 di1.read(result);
+		 return result;
+		} finally {if(di1!=null)di1.close();}
 		}
 	
 	/**

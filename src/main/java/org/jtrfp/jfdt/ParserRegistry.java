@@ -21,7 +21,6 @@ package org.jtrfp.jfdt;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedHashSet;
 
 public class ParserRegistry{
 	private static HashMap<String,LinkedHashSet<String>> parserRegistry = new HashMap<String,LinkedHashSet<String>>();
@@ -30,7 +29,7 @@ public class ParserRegistry{
 		LinkedHashSet<String>list=parserRegistry.get(parserTypeKey);
 		list.add(packageName);
 		}
-	public static Class [] getClassesIn(String parserTypeKey){
+	public static Class<?> [] getClassesIn(String parserTypeKey){
 		return parserRegistry.get(parserTypeKey).toArray(new Class[]{});
 		}
 	}//end ParserRegistry

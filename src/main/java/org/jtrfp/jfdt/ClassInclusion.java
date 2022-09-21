@@ -20,17 +20,16 @@
 package org.jtrfp.jfdt;
 
 import java.lang.reflect.Modifier;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
 public abstract class ClassInclusion{
-	public abstract Class [] propose();
+	public abstract Class<?> [] propose();
 	
 	public static ClassInclusion nestedClassesOf(final Class <?> containingClass){
 		return new ClassInclusion(){
 				@Override
-				public Class[] propose(){
+				public Class<?>[] propose(){
 					Class<?> []rawClasses = containingClass.getDeclaredClasses();
 					ArrayList<Class<?>> resultList = new ArrayList<Class<?>>();
 					for(Class<?> clazz:rawClasses){
@@ -49,7 +48,7 @@ public abstract class ClassInclusion{
 	public static ClassInclusion classOf(final Class <?> proposedClass){
 		return new ClassInclusion(){
 				@Override
-				public Class[] propose(){
+				public Class<?>[] propose(){
 					if(proposedClass.isAssignableFrom(ThirdPartyParseable.class)&&Modifier.isAbstract(proposedClass.getModifiers()))return new Class[]{proposedClass};
 					return new Class[]{proposedClass};
 					}//end propose()
