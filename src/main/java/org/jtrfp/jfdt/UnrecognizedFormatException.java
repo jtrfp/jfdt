@@ -28,4 +28,6 @@ public class UnrecognizedFormatException extends RuntimeException{
 	public UnrecognizedFormatException(){super();}
 	public UnrecognizedFormatException(String string)
 		{super(string);}
+	public UnrecognizedFormatException(String msg, Throwable cause)
+		{super(msg,cause);}
 	}
