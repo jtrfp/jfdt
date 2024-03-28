@@ -2,7 +2,7 @@
  * This file is part of the JAVA FILE DESCRIPTION TOOLKIT (JFDT)
  * A library for parsing files and mapping their data to/from java Beans.
  * ...which is now part of the JAVA TERMINAL REALITY FILE PARSERS project.
- * Copyright (c) 2012,2013 Chuck Ritola and any contributors to these files.
+ * Copyright (c) 2012-2024 Chuck Ritola and any contributors to these files.
  * 
  *     JFDT is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
@@ -25,5 +25,5 @@ package org.jtrfp.jfdt;
  *
  */
 public interface ThirdPartyParseable{
-	public void describeFormat(Parser parser) throws UnrecognizedFormatException;
+	public void describeFormat(Parser p) throws UnrecognizedFormatException;
 	}
