@@ -71,7 +71,7 @@ public class Parser{
 		if(os!=null)os.setOrder(order);
 		}
 	
-	private static final UnrecognizedFormatException UNRECOGNIZED_FORMAT_EXCEPTION = new UnrecognizedFormatException();
+	//private static final UnrecognizedFormatException UNRECOGNIZED_FORMAT_EXCEPTION = new UnrecognizedFormatException();
 	
 	/**
 	 * Read the specified InputStream, parsing it and writing the property values to the given instantiated bean.<br>
@@ -231,17 +231,15 @@ public class Parser{
 		}*/
 	@SuppressWarnings("unchecked")
 	private <CLASS> CLASS get(ThirdPartyParseable obj, String property, Class <? extends CLASS> propertyReturnClass){
-		//System.out.println(clazz.getName()+" object="+obj.getClass());
 		try {
 		        final Class<?>[] nullClasses = null;
-			Method meth = obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), nullClasses);
+			Method method = obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), nullClasses);
 			if(propertyReturnClass==String.class){
-				//Object result = new PropertyDescriptor(property,obj.getClass()).getReadMethod().invoke(obj, null);
-				Object result = meth.invoke(obj, (Object[])null);
+				Object result = method.invoke(obj, (Object[])null);
 				if(!result.getClass().isEnum())return (CLASS)new String(""+result);
 				else return (CLASS)(((Enum<?>)result).ordinal()+"");
 				}
-			return (CLASS)meth.invoke(obj, (Object[])null);
+			return (CLASS)method.invoke(obj, (Object[])null);
 			}
 		catch(Exception e){throw new RuntimeException(e);}
 		}
@@ -268,27 +266,46 @@ public class Parser{
 				catch(InstantiationException e){e.printStackTrace();}
 				}//end StringParser
 			}
-		//else {throw new RuntimeException("Unrecognized property class: "+clazz.getName());}
-		//System.out.println("Argument type: "+value.getClass().getSimpleName()+" bean type: "+obj.getClass()+" property name: "+property);
-		//try{new PropertyDescriptor(property,obj.getClass()).getWriteMethod().invoke(obj,value);}
 		invokeSet(obj,"set"+Character.toUpperCase(property.charAt(0))+property.substring(1),value,value.getClass());
 		}
-	
+
 	private static void invokeSet(Object obj, String mName, Object value, Class<?> argClass){
-		if(argClass==Integer.class)argClass=int.class;
-		if(argClass==Double.class) argClass=double.class;
-		if(argClass==Boolean.class)argClass=boolean.class;
-		if(argClass==Long.class)   argClass=long.class;
-		try{obj.getClass().getMethod(mName, argClass).invoke(obj, value);}
-		catch(NoSuchMethodException e){
-			if(argClass==Object.class)
-				throw new RuntimeException("Failed to find class for method "+ mName+" in "+obj.getClass().getName());
-			argClass=argClass.getSuperclass();
-			invokeSet(obj,mName,value,argClass);
+	    if(argClass==Integer.class)argClass=int.class;
+	    if(argClass==Double.class) argClass=double.class;
+	    if(argClass==Boolean.class)argClass=boolean.class;
+	    if(argClass==Long.class)   argClass=long.class;
+
+	    try{obj.getClass().getMethod(mName, argClass).invoke(obj, value);
+	    	return;
+	    	}
+	    catch(NoSuchMethodException e){
+		//System.out.println("No such method.");
+		if(argClass==Object.class)
+		    throw new RuntimeException("Failed to find class for method "+ mName+" in "+obj.getClass().getName());
+		
+		Method matchedMethod = null;
+		for(Method m : obj.getClass().getMethods()) {
+		    if(m.getParameterCount() == 1 && m.getName().contentEquals(mName)) {
+			final Class<?> parm = m.getParameterTypes()[0];
+			try {parm.cast(value);
+			matchedMethod = m;
 			}
-		catch(Exception e){e.printStackTrace();System.exit(0);}
+			catch(ClassCastException ee) {throw new RuntimeException(ee);}
+		    }//end if(parmCount==1)
+		}//end for(getMethods())
+		if(matchedMethod != null)
+		    try {
+			matchedMethod.invoke(obj, value);}
+		catch(Exception eee) {throw new RuntimeException(eee);}//ugh.
+		
+		else {
+		    argClass=argClass.getSuperclass();
+		    invokeSet(obj,mName,value,argClass);
 		}
-	
+	    }//end NoSuchMethod
+	    catch(Exception e){throw new RuntimeException(e);}
+	}
+
 	/*private static String getString(ThirdPartyParseable obj, String property)
 		{
 		try{return (String)new PropertyDescriptor(property,obj.getClass()).getReadMethod().invoke(obj, null);}
@@ -342,15 +359,11 @@ public class Parser{
 						}
 					}//end switch{}
 				}//end try{}
+			catch(UnrecognizedFormatException e) {throw e;}
 			catch(Exception e){
 				if(e instanceof EOFException && ignoreEOF)
 					{}//Do nothing
-				else if(e instanceof UnrecognizedFormatException)throw UNRECOGNIZED_FORMAT_EXCEPTION;
-				else{
-					e.printStackTrace();
-					System.err.println("... this exception occured while accessing offset "+
-					is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")");
-					}
+				else	{throw new UnrecognizedFormatException("exception occured while accessing offset "+is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")",e);}
 				}//end catch(...)
 			}//end go()
 		
@@ -533,15 +546,18 @@ public class Parser{
 				public void read(EndianAwareDataInputStream is, 
 						ThirdPartyParseable bean) throws IOException{
 					byte [] b = new byte[bytes.length];
-					//System.out.println("b.length="+b.length+" pos="+is.getReadTally());
+					final long readTally = is.getReadTally();
 					is.mark(b.length);
 					try{is.readFully(b);}
 					catch(EOFException e){
-					    if(failureBehavior == FailureBehavior.UNRECOGNIZED_FORMAT)
-						throw UNRECOGNIZED_FORMAT_EXCEPTION;
-					    else throw e;// No solution found.
+						throw new EOFException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
 					    // FLIP_ENDIAN isn't going to help here so it won't be considered.
-					}//end catch(EOFException)
+					}catch(Exception e) {
+					    if(failureBehavior == FailureBehavior.UNRECOGNIZED_FORMAT)
+						throw new UnrecognizedFormatException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);
+					    else
+						throw new RuntimeException(e);
+					}
 					if(order()==ByteOrder.LITTLE_ENDIAN){b=flipEndian(b);/*System.out.println("endian mode is little. Flipping input.");*/}
 					/*
 					System.out.print("Expected: ");
@@ -557,7 +573,6 @@ public class Parser{
 					System.out.println();
 					*/
 					if(!Arrays.equals(b,bytes)){
-						//System.out.println("No match. Position prior to resetting: "+is.getReadTally());
 						is.reset();//reset, assuming the string is simply missing. //TODO: Smarter handling? Approximation?
 						if(failureBehavior==FailureBehavior.UNRECOGNIZED_FORMAT){
 							/*
@@ -573,7 +588,7 @@ public class Parser{
 								}
 							System.out.println();
 							*/
-							throw UNRECOGNIZED_FORMAT_EXCEPTION;
+							throw new UnrecognizedFormatException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
 							}//end if(throwException)
 						else if(failureBehavior==FailureBehavior.FLIP_ENDIAN){
 							byte [] w = flipEndian(bytes);
@@ -584,7 +599,6 @@ public class Parser{
 							return;
 							}
 						}//end (!equal)
-					//System.out.println("Expectation successful in class "+pc.beanStack.peek().getClass().getName()+" at offset 0x"+Long.toHexString(pc.is.getReadTally()));
 					}//end read(...)
 
 				@Override
@@ -729,12 +743,13 @@ public class Parser{
 						@Override
 						public void set(PROPERTY_CLASS value,
 								ThirdPartyParseable bean){
-							//System.out.println("elementType="+elementType);
 							Object nilArray = Array.newInstance(elementType, 0);//TODO: Move this allocation to later branch
 							Object array = Parser.this.get(bean, propertyName, nilArray.getClass());
 							Class<?> indexingClass=null;
 							try{indexingClass=Parser.this.getPropertyReturnType(bean, propertyName);}
-							catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+							catch(NoSuchMethodException e){
+							    final long readTally = is.getReadTally();
+							    throw new RuntimeException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);}
 							if(List.class.isAssignableFrom(indexingClass))
 								{//Lists scale up far better than arrays.
 								if(array==null)
@@ -773,7 +788,9 @@ public class Parser{
 							{
 							Class<?> indexingClass=null;
 							try{indexingClass=Parser.this.getPropertyReturnType(bean, propertyName);}
-							catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+							catch(NoSuchMethodException e){
+							    final long readTally = is.getReadTally();
+							    throw new RuntimeException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);}
 							if(List.class.isAssignableFrom(indexingClass))
 								{@SuppressWarnings("unchecked")
 								List<PROPERTY_CLASS> list = (List<PROPERTY_CLASS>)Parser.this.get(bean, propertyName,indexingClass);
@@ -848,8 +865,6 @@ public class Parser{
 						if(!includeEndingWhenReading)
 							{string=string.substring(0, (string.length()));}
 						}//end null-ending (go until EOF)
-					//System.out.println("property.getPropertyClass()="+property.getPropertyClass());
-					//System.out.println("stringEndingWith got "+string);
 					property.set(convertFromString(string,property.getPropertyClass()), bean);
 					//set(bean,targetProperty,string,propertyType);
 					}
@@ -898,9 +913,7 @@ public class Parser{
 							string=string.substring(0, (string.length()));
 							}
 						}//end null-ending (go until EOF)
-					//System.out.println("property.getPropertyClass()="+property.getPropertyClass());
 					property.set((CLASS)sParser.parseRead(string), bean);
-					//set(bean,targetProperty,string,propertyType);
 					}
 
 				@Override
@@ -928,24 +941,21 @@ public class Parser{
 			public void read(EndianAwareDataInputStream is, 
 					ThirdPartyParseable bean) throws IOException{
 				ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
-				//System.out.println("read()...");
 				for(ClassInclusion inc:inclusions)
 					{Collections.addAll(classes, (Class<?>[])inc.propose());}
 				if(classes.size()==0)throw new RuntimeException("No inclusion classes given. Need at least one. Trouble ahead...");
 				CLASS obj=null;
 				for(Class<?> c:classes){
-					//System.out.println("Parser.subParseProposedClasses() trying class "+c.getName());
-					try{obj=(CLASS)readToNewBean(is, (Class<? extends ThirdPartyParseable>)c);break;}//break from the loop if successful.
-					catch(IllegalAccessException e){e.printStackTrace();}
-					catch(UnrecognizedFormatException e){}//keep trying other parser classes if not successful
+					try{obj=(CLASS)readToNewBean(is, (Class<? extends ThirdPartyParseable>)c);/*System.out.println("Parsed "+c.getSimpleName()); */break;}//break from the loop if successful.
+					catch(UnrecognizedFormatException e){/*System.out.println("Proposed class failed to parse.");*/}//keep trying other parser classes if not successful
+					catch(Exception e) {e.printStackTrace();}
 					}
 				//Store the object
-				//System.out.println("subParseProposedClasses() obj="+obj+" bean="+bean);
 				if(obj!=null){pDest.set(obj, bean);}
 				//Fail
 				else{
 					long readTally=is.getReadTally();
-					System.out.println("None of the supplied classes match at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");new Exception().printStackTrace();
+					throw new UnrecognizedFormatException("None of the supplied classes match at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
 					}
 				}//end read(...)
 
@@ -1214,7 +1224,10 @@ public class Parser{
 
 					Class<?> indexingClass=null;
 					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayOrListPropertyName);}
-					catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+					catch(NoSuchMethodException e){
+					    final long readTally = is.getReadTally();
+					    throw new RuntimeException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);
+					    }
 					
 					for(int i=0; i<count; i++){
 						try{objectsToMake.add(readToNewBean(is, elementClass));}
@@ -1231,7 +1244,10 @@ public class Parser{
 					
 					Class<?> indexingClass=null;
 					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayOrListPropertyName);}
-					catch(NoSuchMethodException e){e.printStackTrace();System.exit(1);}
+					catch(NoSuchMethodException e){
+					    final long readTally = is.getReadTally();
+					    throw new RuntimeException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);
+					    }
 					
 					if(List.class.isAssignableFrom(indexingClass)) 
 						{@SuppressWarnings("unchecked")
