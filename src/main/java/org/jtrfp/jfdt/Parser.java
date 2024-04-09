@@ -363,7 +363,12 @@ public class Parser{
 			catch(Exception e){
 				if(e instanceof EOFException && ignoreEOF)
 					{}//Do nothing
-				else	{throw new UnrecognizedFormatException("exception occured while accessing offset "+is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")",e);}
+				else	{
+				    if(is != null)
+					throw new UnrecognizedFormatException("exception occured while accessing offset "+is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")",e);
+					else
+					    throw new UnrecognizedFormatException("",e); 
+				    }
 				}//end catch(...)
 			}//end go()
 		
