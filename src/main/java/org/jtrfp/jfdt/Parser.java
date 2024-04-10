@@ -233,7 +233,10 @@ public class Parser{
 	private <CLASS> CLASS get(ThirdPartyParseable obj, String property, Class <? extends CLASS> propertyReturnClass){
 		try {
 		        final Class<?>[] nullClasses = null;
-			Method method = obj.getClass().getMethod("get"+Character.toUpperCase(property.charAt(0))+property.substring(1), nullClasses);
+		        String prefix = "get";
+		        if(propertyReturnClass == boolean.class || propertyReturnClass == Boolean.class)
+		            prefix = "is";
+			Method method = obj.getClass().getMethod(prefix+Character.toUpperCase(property.charAt(0))+property.substring(1), nullClasses);
 			if(propertyReturnClass==String.class){
 				Object result = method.invoke(obj, (Object[])null);
 				if(!result.getClass().isEnum())return (CLASS)new String(""+result);
@@ -924,7 +927,10 @@ public class Parser{
 				@Override
 				public void write(EndianAwareDataOutputStream os, 
 						ThirdPartyParseable bean) throws IOException{
-					os.write(sParser.parseWrite(bean).getBytes());
+				    //Read the property value from the bean
+				    CLASS val = property.get(bean);
+				    final String valString = sParser.parseWrite(val);
+					os.write(valString.getBytes());
 					//os.write(property.getAsString(bean).getBytes());
 					if(ending!=null)os.write(ending.getBytes());
 					}
