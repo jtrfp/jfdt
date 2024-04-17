@@ -239,7 +239,7 @@ public class Parser{
 			Method method = obj.getClass().getMethod(prefix+Character.toUpperCase(property.charAt(0))+property.substring(1), nullClasses);
 			if(propertyReturnClass==String.class){
 				Object result = method.invoke(obj, (Object[])null);
-				if(!result.getClass().isEnum())return (CLASS)new String(""+result);
+				if(!propertyReturnClass.isEnum())return (CLASS)new String(""+result);
 				else return (CLASS)(((Enum<?>)result).ordinal()+"");
 				}
 			return (CLASS)method.invoke(obj, (Object[])null);
@@ -558,9 +558,11 @@ public class Parser{
 					is.mark(b.length);
 					try{is.readFully(b);}
 					catch(EOFException e){
+					    is.reset();
 						throw new EOFException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
 					    // FLIP_ENDIAN isn't going to help here so it won't be considered.
 					}catch(Exception e) {
+					    is.reset();
 					    if(failureBehavior == FailureBehavior.UNRECOGNIZED_FORMAT)
 						throw new UnrecognizedFormatException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);
 					    else
