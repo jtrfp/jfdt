@@ -4,7 +4,7 @@
 	
 	<groupId>org.jtrfp</groupId>
 	<artifactId>jfdt</artifactId>
-	<version>1.2.0</version>
+	<version>1.2.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	
 	<name>jfdt</name>
