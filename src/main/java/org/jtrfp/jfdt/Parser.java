@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
 
 
@@ -799,8 +800,7 @@ public class Parser{
 							Class<?> indexingClass=null;
 							try{indexingClass=Parser.this.getPropertyReturnType(bean, propertyName);}
 							catch(NoSuchMethodException e){
-							    final long readTally = is.getReadTally();
-							    throw new RuntimeException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);}
+							    throw new RuntimeException(e);}
 							if(List.class.isAssignableFrom(indexingClass))
 								{@SuppressWarnings("unchecked")
 								List<PROPERTY_CLASS> list = (List<PROPERTY_CLASS>)Parser.this.get(bean, propertyName,indexingClass);
@@ -1258,8 +1258,7 @@ public class Parser{
 					Class<?> indexingClass=null;
 					try{indexingClass=Parser.this.getPropertyReturnType(bean, arrayOrListPropertyName);}
 					catch(NoSuchMethodException e){
-					    final long readTally = is.getReadTally();
-					    throw new RuntimeException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")",e);
+					    throw new RuntimeException(e);
 					    }
 					
 					if(List.class.isAssignableFrom(indexingClass)) 
