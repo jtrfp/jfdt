@@ -742,6 +742,7 @@ public class Parser{
 	/**
 	 * Returns a PropertyDestination representing the given property name, type, and index given the bean property is indexed.<br>
 	 * When reading, will automatically re-size (re-allocate, really) the array if the index too high, then add the items, Expect this to be slow.
+	 * The property being mapped may also be of List type. Appending will be much faster than an array if backed by something like an ArrayList.
 	 * @param propertyName	The name of the property, not including the 'get' or 'set' prefix.
 	 * @param elementType	The type of element to be set at the given index.
 	 * @param index	Index in the array or List at which to perform the set or get.
