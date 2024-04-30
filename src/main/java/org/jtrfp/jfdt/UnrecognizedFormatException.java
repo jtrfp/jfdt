@@ -21,13 +21,30 @@ package org.jtrfp.jfdt;
 
 
 public class UnrecognizedFormatException extends RuntimeException{
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -7718925826063941291L;
-	public UnrecognizedFormatException(){super();}
-	public UnrecognizedFormatException(String string)
-		{super(string);}
-	public UnrecognizedFormatException(String msg, Throwable cause)
-		{super(msg,cause);}
-	}
+    /**
+     * Thrown whenever a parser has difficulty parsing (understanding) the source data or constructing it.
+     * This may have a cause related to some internal operation i.e. a NumberFormatException, or originally created by this framework.
+     * In cases where multiple candidates for parsing are used and none are successful, all of the exceptions thrown
+     * in the candidate process are stored as suppressed Throwables and will be included in printStackTrace().
+     */
+    private static final long serialVersionUID = -7718925826063941291L;
+    public UnrecognizedFormatException(){super();}
+    public UnrecognizedFormatException(String string)
+    {super(string);}
+    public UnrecognizedFormatException(String msg, Throwable cause)
+    {super(msg,cause);}
+
+    public UnrecognizedFormatException(Throwable cause) {
+	super(cause);
+    }
+    @Override
+    public void printStackTrace() {
+	super.printStackTrace();
+	final Throwable [] suppressed = getSuppressed();
+	if(suppressed.length != 0) {
+	    System.err.println("Suppressed stack traces: ");
+	    for(Throwable t : suppressed)
+		t.printStackTrace();
+	}//end if(suppressed present)
+    }//end printStackTrace()
+}//end UnrecognizedFormatException

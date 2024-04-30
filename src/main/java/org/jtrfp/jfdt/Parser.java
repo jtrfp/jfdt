@@ -56,7 +56,7 @@ public class Parser{
 	private ByteOrder order=ByteOrder.BIG_ENDIAN;
 	private Stack<ThirdPartyParseable> beanStack = new Stack<ThirdPartyParseable>();
 	
-	public boolean ignoreEOF=false;
+	public boolean ignoreEOF=false, unrecognizedFormatExceptionOnStringParseProblem=false;
 	
 	public ThirdPartyParseable peekBean(){return beanStack.peek();}
 	public void popBean(){beanStack.pop();}
@@ -303,7 +303,10 @@ public class Parser{
 		catch(Exception eee) {throw new RuntimeException(eee);}//ugh.
 		
 		else {
-		    argClass=argClass.getSuperclass();
+		    final Class<?> superClass = argClass.getSuperclass();
+		    if(superClass == null)
+			throw new RuntimeException("Failed to find compatible method signature for desired property type. Topmost valid class: "+argClass.getName());
+		    argClass=superClass;
 		    invokeSet(obj,mName,value,argClass);
 		}
 	    }//end NoSuchMethod
@@ -364,16 +367,13 @@ public class Parser{
 					}//end switch{}
 				}//end try{}
 			catch(UnrecognizedFormatException e) {throw e;}
-			catch(Exception e){
-				if(e instanceof EOFException && ignoreEOF)
+			catch(EOFException e){
+				if(ignoreEOF)
 					{}//Do nothing
-				else	{
-				    if(is != null)
-					throw new UnrecognizedFormatException("exception occured while accessing offset "+is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")",e);
-					else
-					    throw new UnrecognizedFormatException("",e); 
-				    }
 				}//end catch(...)
+			catch(IOException e) {
+			    throw new RuntimeException(e);
+			}
 			}//end go()
 		
 		public abstract void read(EndianAwareDataInputStream is,  ThirdPartyParseable bean) throws IOException;
@@ -599,7 +599,7 @@ public class Parser{
 								}
 							System.out.println();
 							*/
-							throw new UnrecognizedFormatException("Occurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
+							throw new UnrecognizedFormatException("Expected: "+new String(bytes)+" got "+new String(b)+"\nOccurred at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
 							}//end if(throwException)
 						else if(failureBehavior==FailureBehavior.FLIP_ENDIAN){
 							byte [] w = flipEndian(bytes);
@@ -876,7 +876,18 @@ public class Parser{
 						if(!includeEndingWhenReading)
 							{string=string.substring(0, (string.length()));}
 						}//end null-ending (go until EOF)
-					property.set(convertFromString(string,property.getPropertyClass()), bean);
+					CLASS newVal = null;
+					try{newVal = convertFromString(string,property.getPropertyClass());
+					}catch(Throwable t) {
+					    if(unrecognizedFormatExceptionOnStringParseProblem)
+						throw new UnrecognizedFormatException(t);
+					    else
+						throw new RuntimeException("Abnormal exception while parsing string: "+string+" to "+property.getPropertyClass().getName(),t);
+					}
+					try{property.set(newVal, bean);}
+					catch(Throwable t) {
+					    throw new RuntimeException("Abnormal exception while setting property.",t);
+					 }
 					//set(bean,targetProperty,string,propertyType);
 					}
 
@@ -959,17 +970,18 @@ public class Parser{
 					{Collections.addAll(classes, (Class<?>[])inc.propose());}
 				if(classes.size()==0)throw new RuntimeException("No inclusion classes given. Need at least one. Trouble ahead...");
 				CLASS obj=null;
+				final UnrecognizedFormatException tentativeException = new UnrecognizedFormatException("None of the supplied classes match at byte "+is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")");
 				for(Class<?> c:classes){
 					try{obj=(CLASS)readToNewBean(is, (Class<? extends ThirdPartyParseable>)c);/*System.out.println("Parsed "+c.getSimpleName()); */break;}//break from the loop if successful.
-					catch(UnrecognizedFormatException e){/*System.out.println("Proposed class failed to parse.");*/}//keep trying other parser classes if not successful
+					catch(UnrecognizedFormatException e){tentativeException.addSuppressed(e);}//keep trying other parser classes if not successful
 					catch(Exception e) {e.printStackTrace();}
 					}
 				//Store the object
 				if(obj!=null){pDest.set(obj, bean);}
 				//Fail
 				else{
-					long readTally=is.getReadTally();
-					throw new UnrecognizedFormatException("None of the supplied classes match at byte "+readTally+" (0x"+Long.toHexString(readTally).toUpperCase()+")");
+					//long readTally=is.getReadTally();
+					throw tentativeException;
 					}
 				}//end read(...)
 
@@ -1311,4 +1323,11 @@ public class Parser{
 			System.err.println("\t"+b.getClass().getSimpleName());
 			}
 		}//end kaboom
+	public boolean isUnrecognizedFormatExceptionOnStringParseProblem() {
+	    return unrecognizedFormatExceptionOnStringParseProblem;
+	}
+	public void setUnrecognizedFormatExceptionOnStringParseProblem(
+		boolean unrecognizedFormatExceptionOnStringParseProblem) {
+	    this.unrecognizedFormatExceptionOnStringParseProblem = unrecognizedFormatExceptionOnStringParseProblem;
+	}
 	}//end Parser
