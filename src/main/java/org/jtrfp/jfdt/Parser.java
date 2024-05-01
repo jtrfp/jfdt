@@ -370,6 +370,8 @@ public class Parser{
 			catch(EOFException e){
 				if(ignoreEOF)
 					{}//Do nothing
+				else
+				    throw new UnrecognizedFormatException(e);
 				}//end catch(...)
 			catch(IOException e) {
 			    throw new RuntimeException(e);
@@ -830,40 +832,70 @@ public class Parser{
 					final boolean includeEndingWhenReading){
 			    stringEndingWith(ending!=null?new String[]{ending}:null,property,includeEndingWhenReading);
 			}
+		/**
+		* Tells the Parser that there is an arbitrary-length string in the current position in the description until it finds the specified ending. When writing with includeEndingWhenReading false, the ending is automatically
+		* written to the file.
+		* @param ending
+		* @param property						The bean property to map to/from this String.
+		* @param includeEndingWhenReading		Include the specified ending when reading, and do not write the specified ending when writing, assuming that it is already in the property's String.
+		* @since Sep 17, 2012
+		*/
+	public <CLASS>void stringEndingWith(String[] endingPatterns, final PropertyDestination<CLASS> property,
+			final boolean includeEndingWhenReading){
+	    stringEndingWithAndFailAt(endingPatterns, null, property, includeEndingWhenReading);
+	}//end stringEndingWith()
 
 	/**
-	 * Tells the Parser that there is an arbitrary-length string in the current position in the description until it finds the specified ending. When writing with includeEndingWhenReading false, the ending is automatically
-	 * written to the file.
-	 * @param ending
-	 * @param property						The bean property to map to/from this String.
-	 * @param includeEndingWhenReading		Include the specified ending when reading, and do not write the specified ending when writing, assuming that it is already in the property's String.
-	 * @since Sep 17, 2012
+	 * Similar to stringEndingWith with the ability to throw an UnrecognizedFormatException if one or more failure patterns match.
+	 * @param <CLASS>
+	 * @param endingPatterns
+	 * @param failurePatterns
+	 * @param property
+	 * @param includeEndingWhenReading
+	 * @since Apr 30, 2024
 	 */
-	public <CLASS>void stringEndingWith(String[] endings,final PropertyDestination<CLASS> property,
+	public <CLASS>void stringEndingWithAndFailAt(String[] endingPatterns, String[] failurePatterns, final PropertyDestination<CLASS> property,
 			final boolean includeEndingWhenReading){
-	    if(endings!=null){
-		if(endings.length>0)
-	         Arrays.sort(endings, new Comparator<String>(){
+	    if(parseMode == ParseMode.READ)is.mark(1024);
+	    if(endingPatterns!=null){
+		if(endingPatterns.length>0)
+	         Arrays.sort(endingPatterns, new Comparator<String>(){
 		    @Override
 		    public int compare(String l, String r) {//Reversed; sort large to small
 			return r.length()-l.length();
 		    }});
-		else endings=null;
+		else endingPatterns=null;
 		}//end if(null)
-	    final String [] ending = endings;
+	    if(failurePatterns!=null){
+		if(failurePatterns.length>0)
+	         Arrays.sort(failurePatterns, new Comparator<String>(){
+		    @Override
+		    public int compare(String l, String r) {//Reversed; sort large to small
+			return r.length()-l.length();
+		    }});
+		else failurePatterns=null;
+		}//end if(null)
+	    final String [] endings = endingPatterns;
+	    final String [] failings = failurePatterns;
 		new RWHelper(){
 				@Override
 				public void read(EndianAwareDataInputStream is, 
 						ThirdPartyParseable bean) throws IOException{
 					String string ="";
-					if(ending!=null){
+					if(endings!=null){
 					    	String endingFound=null;
 					    	while(endingFound==null){
 					    	 string+=((char)is.readByte());
-					    	 for(String test:ending)
+					    	if(failings!= null)
+					    	 for(String test:failings)
+					    	     if(string.endsWith(test)){
+					    		 is.reset();
+					    		 throw new UnrecognizedFormatException();
+					    	    }//end for(endings)
+					    	 for(String test:endings)
 					    	     if(string.endsWith(test)){
 					    		 endingFound=test; break;
-					    		 }//end for(endings)
+					    	   }//end for(endings)
 					    	}//end while(!endingFound)
 						if(!includeEndingWhenReading)
 							{string=string.substring(0, (string.length()-endingFound.length()));}
@@ -895,9 +927,9 @@ public class Parser{
 				public void write(EndianAwareDataOutputStream os, 
 						ThirdPartyParseable bean) throws IOException{
 					os.write(property.getAsString(bean).getBytes());
-					if(ending!=null)
-					    if(ending[0]!=null)
-						os.write(ending[0].getBytes());
+					if(endings!=null)
+					    if(endings[0]!=null)
+						os.write(endings[0].getBytes());
 					}
 			}.go();
 		}//end stringEndingWith(...)
@@ -972,10 +1004,15 @@ public class Parser{
 				CLASS obj=null;
 				final UnrecognizedFormatException tentativeException = new UnrecognizedFormatException("None of the supplied classes match at byte "+is.getReadTally()+" (0x"+Long.toHexString(is.getReadTally()).toUpperCase()+")");
 				for(Class<?> c:classes){
-					try{obj=(CLASS)readToNewBean(is, (Class<? extends ThirdPartyParseable>)c);/*System.out.println("Parsed "+c.getSimpleName()); */break;}//break from the loop if successful.
-					catch(UnrecognizedFormatException e){tentativeException.addSuppressed(e);}//keep trying other parser classes if not successful
-					catch(Exception e) {e.printStackTrace();}
-					}
+				    try{obj=(CLASS)readToNewBean(is, (Class<? extends ThirdPartyParseable>)c);/*System.out.println("Parsed "+c.getSimpleName()); */break;}//break from the loop if successful.
+				    catch(UnrecognizedFormatException e){tentativeException.addSuppressed(e);}//keep trying other parser classes if not successful
+				    catch(Exception e) {
+					if(Parser.this.isUnrecognizedFormatExceptionOnStringParseProblem()) {
+					    throw new UnrecognizedFormatException(e);
+					} else
+					    throw new RuntimeException(e);
+				    }//end Exception e
+				}//end for()
 				//Store the object
 				if(obj!=null){pDest.set(obj, bean);}
 				//Fail
