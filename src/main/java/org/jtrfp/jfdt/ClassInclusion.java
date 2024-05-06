@@ -46,16 +46,26 @@ public abstract class ClassInclusion{
 		}//end nestedClassesOf(...)
 	
 	public static ClassInclusion classOf(final Class <?> proposedClass){
-		return new ClassInclusion(){
-				@Override
-				public Class<?>[] propose(){
-					if(proposedClass.isAssignableFrom(ThirdPartyParseable.class)&&Modifier.isAbstract(proposedClass.getModifiers()))return new Class[]{proposedClass};
-					return new Class[]{proposedClass};
-					}//end propose()
-			
-			};
-		}//end nestedClassesOf(...)
-	
+	    return new ClassInclusion(){
+		@Override
+		public Class<?>[] propose(){
+		    if(proposedClass.isAssignableFrom(ThirdPartyParseable.class)&&Modifier.isAbstract(proposedClass.getModifiers()))return new Class[]{proposedClass};
+		    return new Class[]{proposedClass};
+		}//end propose()
+
+	    };
+	}//end classOf(...)
+
+	public static ClassInclusion classes(final Class <?> ... proposedClasses){
+	    return new ClassInclusion(){
+		@Override
+		public Class<?>[] propose(){
+		    return proposedClasses;
+		}//end propose()
+
+	    };
+	}//end classes(...)
+
 	public static ClassInclusion classInIncludes(final String registryKey,final String classSimpleName){
 		return new ClassInclusion(){
 			@Override

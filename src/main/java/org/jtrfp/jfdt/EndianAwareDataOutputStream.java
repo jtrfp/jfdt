@@ -111,6 +111,10 @@ public class EndianAwareDataOutputStream extends FilterOutputStream implements
 	public void writeUTF(String v) throws IOException{
 		out.writeUTF(v);
 		}
+	@Override
+	public void write(byte [] bytes) throws IOException {
+	    out.write(bytes);
+	}
 	/**
 	 * @return the order
 	 */
